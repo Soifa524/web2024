@@ -84,6 +84,7 @@
       $("#examIntro").html(`
         <h3>${data.exam_info.title}</h3>
         <p>${data.exam_info.description}</p>
+        <p><strong>สาขาวิชาที่เกี่ยวข้อง:</strong> ${data.exam_info.subject_areas}</p>
         <p><strong>คำแนะนำ:</strong> ${data.instructions}</p>
       `);
     });
