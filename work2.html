@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>แบบทดสอบวิทยาศาสตร์</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body {
+      background-color: #f4f6f9;
+      font-family: 'Prompt', sans-serif;
+      color: #2c3e50;
+    }
+    .header-gradient {
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      color: white;
+      padding: 2rem 0;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .quiz-container {
+      background-color: #ffffff;
+      border-radius: 15px;
+      padding: 30px;
+      margin-top: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .quiz-question {
+      background-color: #f8f9fa;
+      border-left: 6px solid #007bff;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    .quiz-option {
+      margin-bottom: 12px;
+    }
+    .quiz-option input[type="radio"] {
+      margin-right: 15px;
+    }
+    .correct-answer {
+      background-color: #d4edda;
+    }
+    .incorrect-answer {
+      background-color: #f8d7da;
+    }
+    .explanation {
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header-gradient text-center py-4">
+    <h1>แบบทดสอบวิทยาศาสตร์</h1>
+  </div>
+
+  <div class="container quiz-container">
+    <div id="examIntro" class="mb-4"></div>
+    <div id="startBox" class="text-center">
+      <button class="btn btn-primary btn-lg" id="btnStart">เริ่มทำแบบทดสอบ</button>
+    </div>
+
+    <div id="quizBox" style="display:none;">
+      <div id="quizListBox"></div>
+      <div class="text-center mt-4">
+        <button class="btn btn-success" id="btnCheckAnswer">ตรวจคำตอบ</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let quizData = {};
+    
+    // Load quiz JSON data
+    $.getJSON('quiz2.json', function(data) {
+      quizData = data;
+      $("#examIntro").html(`
+        <h3>${data.exam_info.title}</h3>
+        <p>${data.exam_info.description}</p>
+        <p><strong>สาขาวิชาที่เกี่ยวข้อง:</strong> ${data.exam_info.subject_areas}</p>
+        <p><strong>คำแนะนำ:</strong> ${data.instructions}</p>
+      `);
+    });
+
+    // Start Quiz
+    $("#btnStart").click(function() {
+      $("#startBox").hide();
+      $("#quizBox").show();
+      displayQuizList();
+    });
+
+    // Display Quiz List
+    function displayQuizList() {
+      const questions = quizData.questions;
+      $("#quizListBox").html(questions.map((q, index) => `
+        <div class="quiz-question">
+          <h5>ข้อที่ ${index + 1}: ${q.question}</h5>
+          ${q.choices.map((choice, i) => `
+            <div class="quiz-option">
+              <input type="radio" name="q${index}" value="${i}">
+              <label>${choice}</label>
+            </div>
+          `).join('')}
+        </div>
+      `).join(''));
+    }
+
+    // Check Answers
+    $("#btnCheckAnswer").click(function() {
+      let score = 0;
+      const questions = quizData.questions;
+
+      questions.forEach((q, index) => {
+        const selected = $(`input[name='q${index}']:checked`).val();
+        const questionElem = $(`input[name='q${index}']`).closest('.quiz-question');
+
+        if (selected == q.answer) {
+          score++;
+          questionElem.addClass('correct-answer');
+        } else {
+          questionElem.addClass('incorrect-answer');
+          questionElem.append(`
+            <div class="explanation">คำตอบที่ถูกต้อง: ${q.choices[q.answer]}<br>${q.explanation}</div>
+          `);
+        }
+      });
+
+      Swal.fire({
+        title: 'ผลคะแนน',
+        text: `คุณทำถูก ${score} ข้อ จาก ${questions.length} ข้อ`,
+        icon: 'info'
+      });
+    });
+  </script>
+</body>
+</html>
