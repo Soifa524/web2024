@@ -1,0 +1,48 @@
+<head>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/donmccurdy/aframe-extras/v6.1.0/dist/aframe-extras.min.js"></script>
+    <script
+        src="https://cdn.rawgit.com/donmccurdy/aframe-animation-mixer/v3.3.0/dist/aframe-animation-mixer.min.js"></script>
+</head>
+
+<body>
+    <a-scene>
+        <!-- Assets -->
+        <a-assets>
+            <a-asset-item id="prayingModel" src="praying.glb"></a-asset-item>
+            <a-asset-item id="tankModel" src="tank.glb"></a-asset-item>
+            <img id="skyTexture" src="lake.jpg">
+        </a-assets>
+
+        <!-- Moving Box -->
+        <a-box position="-1 1.6 -5" animation="property: position; to: 1 8 -10; dur: 2000; easing: linear; loop: true"
+            color="tomato">
+        </a-box>
+
+        <!-- Rotating Entity with Sphere -->
+        <a-entity rotation="0 0 0" animation="property: rotation; to: 0 360 0; loop: true; dur: 10000">
+            <a-sphere position="5 0 0" color="mediumseagreen"></a-sphere>
+        </a-entity>
+
+        <!-- Cylinder -->
+        <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
+
+        <!-- Plane -->
+        <a-plane position="0 0 -4" rotation="-90 0 0" width="10" height="15" color="#7BC8A4"></a-plane>
+
+        <!-- Sky -->
+        <a-sky src="#skyTexture"></a-sky>
+
+        <!-- GLTF Models -->
+        <!-- Praying model -->
+        <a-entity id="praying" position="0 0 -4" scale="1 1 1" gltf-model="#prayingModel" animation-mixer></a-entity>
+
+        <!-- Tank model pointing at the praying model -->
+        <!-- Tank model pointing at the praying model -->
+        <a-entity position="0 0.5 1" scale="1 1 1" gltf-model="#tankModel" animation-mixer look-at="#praying"
+            rotation="0 180 0">
+        </a-entity>
+
+    </a-scene>
+
+</body>
