@@ -11,7 +11,20 @@
         <a-assets>
             <a-asset-item id="prayingModel" src="praying.glb"></a-asset-item>
             <a-asset-item id="tankModel" src="tank.glb"></a-asset-item>
+            <a-asset-item id="swatModel" src="swatDude.glb"></a-asset-item>
+            <a-asset-item id="rifleModel" src="rifle.glb"></a-asset-item>
             <img id="skyTexture" src="lake.jpg">
+            <!-- Swamp Shader -->
+            <script id="swampShader" type="x-shader/x-fragment">
+                <![CDATA[
+                varying vec2 vUv;
+                void main() {
+                    // Simple gradient for swamp effect (muddy water, grassy)
+                    vec3 swampColor = mix(vec3(0.1, 0.4, 0.1), vec3(0.2, 0.2, 0.1), vUv.y);
+                    gl_FragColor = vec4(swampColor, 1.0);
+                }
+                ]]>
+            </script>
         </a-assets>
 
         <!-- Moving Box -->
@@ -24,11 +37,15 @@
             <a-sphere position="5 0 0" color="mediumseagreen"></a-sphere>
         </a-entity>
 
-        <!-- Cylinder -->
-        <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
+        <!-- Plane with Swamp Texture -->
+        <a-plane position="0 0 -4" rotation="-90 0 0" width="20" height="20" 
+            material="shader: #swampShader; color: #7BC8A4;">
+        </a-plane>
 
-        <!-- Plane -->
-        <a-plane position="0 0 -4" rotation="-90 0 0" width="10" height="15" color="#7BC8A4"></a-plane>
+        <!--Text -->
+        <a-text value="Soifa Raknut" position="-2 6 -5" scale="5 5 5" color="white"></a-text>    
+        <a-text value="653380347-4" position="-2 5 -5" scale="5 5 5" color="white"></a-text>
+        <a-text value="Computer Science Student" position="-5 4 -5" scale="5 5 5" color="white"></a-text>    
 
         <!-- Sky -->
         <a-sky src="#skyTexture"></a-sky>
@@ -37,12 +54,27 @@
         <!-- Praying model -->
         <a-entity id="praying" position="0 0 -4" scale="1 1 1" gltf-model="#prayingModel" animation-mixer></a-entity>
 
-        <!-- Tank model pointing at the praying model -->
+        <!-- First SWAT guy -->
+        <a-entity id="swat" position="5 0 -2" scale="1 1 1" gltf-model="#swatModel" animation-mixer look-at="#praying" rotation="0 250 0" material="color: #333333; opacity: 1;">
+            <!-- Attach Rifle to hand -->
+            <a-entity id="rifle" position="0 1.4 0.5" scale="0.2 0.2 0.2" gltf-model="#rifleModel" rotation="0 180 0" position="0.5 0.5 0"></a-entity>
+        </a-entity>
+        
+        <!-- Second SWAT guy -->
+        <a-entity id="swat" position="-4 0 0.5" scale="1 1 1" gltf-model="#swatModel" animation-mixer look-at="#praying" rotation="0 150 0" material="color: #333333; opacity: 1;">
+            <!-- Attach Rifle to hand -->
+            <a-entity id="rifle" position="0 1.4 0.5" scale="0.2 0.2 0.2" gltf-model="#rifleModel" rotation="0 180 0" position="0.5 0.5 0"></a-entity>
+        </a-entity>
+
         <!-- Tank model pointing at the praying model -->
         <a-entity position="0 0.5 1" scale="1 1 1" gltf-model="#tankModel" animation-mixer look-at="#praying"
             rotation="0 180 0">
         </a-entity>
 
-    </a-scene>
+        <!-- Second Tank -->
+        <a-entity position="-6 0.5 -3" scale="1 1 1" gltf-model="#tankModel" animation-mixer look-at="#praying"
+        rotation="0 100 0">
+        </a-entity>
 
+    </a-scene>
 </body>
