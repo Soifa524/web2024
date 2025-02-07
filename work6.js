@@ -67,6 +67,29 @@ function DeleteButton({std,app}){
     return <button onClick={()=>app.delete(std)}>ลบ</button>
 }
 
+//Login Fuction
+function LoginBox(props) {
+  const u = props.user;
+  const app = props.app;
+  if (!u) {
+      return <div><Button onClick={() => app.google_login()}>Login</Button></div>
+  } else {
+      return <div>
+          <img src={u.photoURL} />
+          {u.email}<Button onClick={() => app.google_logout()}>Logout</Button></div>
+  }
+}
+
+
+firebase.auth().onAuthStateChanged((user) => {
+  if (user) {
+      this.setState({ user: user.toJSON() });
+  } else {
+      this.setState({ user: null });
+  }
+});
+
+
 
 class App extends React.Component {
   title = (
@@ -91,15 +114,62 @@ class App extends React.Component {
     stdlname:"",
     stdemail:"",
     stdphone:"",
+    user: null,  // Add user state
+  }
+
+  //Login
+  constructor(props) {
+    super(props);
+    firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+            this.setState({ user: user.toJSON() });
+        } else {
+            this.setState({ user: null });
+        }
+    });
 }
 
-  componentDidMount() {
-    // Fetch data from Firestore when the component mounts
-    this.readData();
+google_login() {
+  var provider = new firebase.auth.GoogleAuthProvider();
+  provider.addScope("profile");
+  provider.addScope("email");
+  firebase.auth().signInWithPopup(provider).then((result) => {
+      this.setState({ user: result.user.toJSON() }, () => {
+          this.readData(); // Fetch data immediately after login
+      });
+  }).catch((error) => {
+      console.error("Login error:", error);
+      alert("Login failed: " + error.message);
+  });
+}
+
+
+google_logout() {
+  if (confirm("Are you sure?")) {
+      firebase.auth().signOut();
   }
+}
+
+
+componentDidMount() {
+  firebase.auth().onAuthStateChanged((user) => {
+      if (user) {
+          this.setState({ user: user.toJSON() }, () => {
+              this.readData(); // Read data only after authentication is complete
+          });
+      } else {
+          this.setState({ user: null });
+      }
+  });
+}
 
   // Define the readData function
   readData = () => {
+    if (!this.state.user) {
+        alert("You must log in to read data!");
+        return;
+    }
+
     db.collection("students")
       .get()
       .then((querySnapshot) => {
@@ -110,26 +180,33 @@ class App extends React.Component {
         this.setState({ students: stdlist });
       })
       .catch((error) => {
-        alert("เกิดข้อผิดพลาดในการอ่านข้อมูล: " + error.message);
+        alert("Error reading data: " + error.message);
         console.error("Error fetching data: ", error);
       });
   };
+
   
   autoRead = () => {
+    if (!this.state.user) {
+        alert("You must log in to auto-read data!");
+        return;
+    }
+
     this.unsubscribe = db.collection("students").onSnapshot(
-      (querySnapshot) => {
-        const stdlist = [];
-        querySnapshot.forEach((doc) => {
-          stdlist.push({ id: doc.id, ...doc.data() });
-        });
-        this.setState({ students: stdlist });
-      },
-      (error) => {
-        alert("เกิดข้อผิดพลาดในการติดตามข้อมูล: " + error.message);
-        console.error("Error in snapshot listener: ", error);
-      }
+        (querySnapshot) => {
+            const stdlist = [];
+            querySnapshot.forEach((doc) => {
+                stdlist.push({ id: doc.id, ...doc.data() });
+            });
+            this.setState({ students: stdlist });
+        },
+        (error) => {
+            alert("Error in real-time data: " + error.message);
+            console.error("Error in snapshot listener: ", error);
+        }
     );
   };
+
   
   // Add componentWillUnmount to unsubscribe from the listener
   componentWillUnmount() {
@@ -143,70 +220,75 @@ class App extends React.Component {
         alert("กรุณากรอกข้อมูลให้ครบ (Please fill in all required fields)");
         return;
     }
-      // Check if the email already exists in the database
+
     if (this.state.stdid) {
-      // If stdid exists, update the existing document
-      db.collection("students").doc(this.state.stdid).set({
-        title: this.state.stdtitle,
-        fname: this.state.stdfname,
-        lname: this.state.stdlname,
-        phone: this.state.stdphone,
-        email: this.state.stdemail,
-      }, { merge: true }); // Use merge to update only provided fields
+        db.collection("students").doc(this.state.stdid).set({
+            title: this.state.stdtitle,
+            fname: this.state.stdfname,
+            lname: this.state.stdlname,
+            phone: this.state.stdphone,
+            email: this.state.stdemail,
+        }, { merge: true }).then(() => {
+            this.readData(); // Fetch updated data
+        });
     } else {
-      // If no stdid, create a new document with an auto-generated ID
-      db.collection("students").add({
-        title: this.state.stdtitle,
-        fname: this.state.stdfname,
-        lname: this.state.stdlname,
-        phone: this.state.stdphone,
-        email: this.state.stdemail,
-      });
+        db.collection("students").add({
+            title: this.state.stdtitle,
+            fname: this.state.stdfname,
+            lname: this.state.stdlname,
+            phone: this.state.stdphone,
+            email: this.state.stdemail,
+        }).then(() => {
+            this.readData(); // Fetch updated data
+        });
     }
-  
-    // Clear the form after saving
+
     this.setState({
-      stdid: "",
-      stdtitle: "",
-      stdfname: "",
-      stdlname: "",
-      stdemail: "",
-      stdphone: "",
+        stdid: "",
+        stdtitle: "",
+        stdfname: "",
+        stdlname: "",
+        stdemail: "",
+        stdphone: "",
     });
   }
+  
 
-edit(std){      
-    this.setState({
-     stdid    : std.id,
-     stdtitle : std.title,
-     stdfname : std.fname,
-     stdlname : std.lname,
-     stdemail : std.email,
-     stdphone : std.phone,
-    })
- }
+  edit(std){      
+      this.setState({
+      stdid    : std.id,
+      stdtitle : std.title,
+      stdfname : std.fname,
+      stdlname : std.lname,
+      stdemail : std.email,
+      stdphone : std.phone,
+      })
+  }
 
-delete(std){
-    if(confirm("ต้องการลบข้อมูล")){
-       db.collection("students").doc(std.id).delete();
+  delete(std){
+      if(confirm("ต้องการลบข้อมูล")){
+        db.collection("students").doc(std.id).delete().then(() => {
+          this.readData();
+      })
     }
-}
+  }
 
 
 render() {
     // Check if required fields are filled
-    const isFormValid = this.state.stdfname && this.state.stdlname && this.state.stdemail;
+    const isFormValid = this.state.stdfname && this.state.stdlname && this.state.stdemail && this.state.stdphone;
   
     return (
       <Card>
         <Card.Header>{this.title}</Card.Header>  
         <Card.Body>
+          <div>
+          <LoginBox user={this.state.user} app={this}></LoginBox>  {/* Add LoginBox here */}
+            <StudentTable data={this.state.students} app={this}></StudentTable>
+          </div>
           <div className="mb-3">
             <Button variant="primary" onClick={()=>this.readData()} className="me-2">Read Data</Button>
             <Button variant="secondary" onClick={()=>this.autoRead()}>Auto Read</Button>
-          </div>
-          <div>
-            <StudentTable data={this.state.students} app={this}/>  
           </div>
         </Card.Body>
         <Card.Footer>
@@ -258,6 +340,7 @@ render() {
       </Card>          
     );
   }
+  
 
 }
 
